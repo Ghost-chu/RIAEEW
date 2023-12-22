@@ -1,0 +1,56 @@
+prefix:
+  realtime: "<green>[实时预警]</green>"
+  reviewed: "<gold>[正式测定]</gold>"
+  cancelled: "<gray>[取消]</gray>"
+  history: "<gray>[历史]</gray>"
+broadcast-global: |
+  <red>== [RIAEEW] 地震速报 | 第 <yellow>{0}</yellow> 报 ==</red>
+  > 震中位置：{1} <gray>（北纬：{2}度，东经：{3}度）</gray>
+  > 震中震级(M)：{4}
+  > 震中深度：{5}km
+  > 震中烈度(I)：{6}
+  > 发震时间：{8}
+  > 更新时间：{9}
+  <gray>> 仅供参考，请以 {10} 的正式测定结果为准</gray>
+  <gray>> 数据源：{11}</gray>
+broadcast-global-ended: "[RIAEEW] {0} 的预警已结束，共预警 {1} 位可能受到影响的在线玩家"
+broadcast-affected-actionbar: "[RIAEEW] <red>⚠处于预警范围</red> {1} 本地烈度：{0}"
+broadcast-affected-ended: |
+  <red>⚠ [RIAEEW] 地震横波已到达您的当前位置 ⚠</red>
+  > 震中：{0} <gray>（北纬：{1}度，东经：{2}度）</gray>
+  > 震中震级(M)：{3}
+  > 震中深度：{4}km
+  > 本地烈度(I)：{5} {6}
+  > 发震时间：{7}
+  > 更新时间：{8}
+  > 提前预警：{9} 秒
+  <gray>> 仅供参考，请以 {10} 的正式测定结果为准</gray>
+  <gray>> 数据源：{11}</gray>
+history-query:
+  header: "[RIAEEW] 近期地震历史数据如："
+  entry: |
+    {0}. {1}
+       更新：{2} 次
+       震中：{3} （北纬：{3}度，东经：{4}度）
+       深度：{5}km
+       震级：{6}
+       发震时刻：{7}
+       最后更新：{8}
+countdown-titles:
+  title: "{0}"
+  title-ended: "<red>地震横波已到达</red>"
+  subtitle: "本地烈度：{0} | 距离：{1}km"
+  subtitle-ended: "{0} | 震级：{1} | 距离：{2}km"
+intensity:
+  NONE:
+    title: "无震感"
+    description: "无需采取措施"
+  LIGHT:
+    title: "轻微震感"
+    description: "可能有轻微震感，请勿慌张，合理避险"
+  MEDIUM:
+    title: "较强震感"
+    description: "有较强震感，请远离悬挂物，合理避险"
+  HEAVY:
+    title: "强烈震感"
+    description: "有强烈震感，立刻迅速逃生"
