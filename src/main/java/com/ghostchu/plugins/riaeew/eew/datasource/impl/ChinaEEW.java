@@ -1,5 +1,6 @@
 package com.ghostchu.plugins.riaeew.eew.datasource.impl;
 
+import com.ghostchu.plugins.riaeew.RIAEEW;
 import com.ghostchu.plugins.riaeew.eew.datasource.DataSource;
 import com.ghostchu.plugins.riaeew.eew.datasource.EarthQuakeInfoBase;
 import com.google.gson.Gson;
@@ -7,6 +8,7 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import kong.unirest.HttpResponse;
 import kong.unirest.Unirest;
+import kong.unirest.UnirestInstance;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -19,10 +21,21 @@ import java.util.stream.Collectors;
 public class ChinaEEW implements DataSource {
     private final Gson GSON = new Gson();
     private final String huaniaApi = new String(Base64.getDecoder().decode("aHR0cHM6Ly9tb2JpbGUtbmV3LmNoaW5hZWV3LmNuL3YxLw=="), StandardCharsets.UTF_8);
+    private final UnirestInstance unirest;
 
+    public ChinaEEW(RIAEEW plugin){
+        this.unirest = Unirest.spawnInstance();
+        this.unirest.config().automaticRetries(false);
+        this.unirest.config().addDefaultHeader("User-Agent", "RIAEEW-Client/1.0.0");
+        this.unirest.config().cacheResponses(false);
+        this.unirest.config().connectTimeout(2000);
+        this.unirest.config().socketTimeout(3000);
+        this.unirest.config().enableCookieManagement(true);
+    }
     @Override
     public CompletableFuture<List<EarthQuakeInfoBase>> getEarthQuakeList(long startPointer) {
         return CompletableFuture.supplyAsync(() -> {
+
             HttpResponse<String> resp = Unirest.get(huaniaApi + "earlywarnings?updates=3&start_at=" + startPointer)
                     .asString();
             if (!resp.isSuccess()) {

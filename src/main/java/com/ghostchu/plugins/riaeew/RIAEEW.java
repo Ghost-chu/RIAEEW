@@ -29,17 +29,20 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+
 @Plugin(
         id = "riaeew-velocity",
         name = "RIAEEW-Velocity",
         version = "1.0-SNAPSHOT",
-        dependencies = {@Dependency(id = "protocolize",optional = true)}
+        dependencies = {@Dependency(id = "protocolize", optional = true)}
 )
 public class RIAEEW {
     @Getter
-    @Inject private Logger logger;
+    @Inject
+    private Logger logger;
     @Getter
-    @Inject private ProxyServer server;
+    @Inject
+    private ProxyServer server;
     @Getter
     private final Map<UUID, GeoIPResult> geoIPResultMap = new ConcurrentSkipListMap<>();
     @Inject
@@ -65,33 +68,35 @@ public class RIAEEW {
             throw new RuntimeException(e);
         }
         this.text = new TextManager(this, new File(dataFolder, "messages.yml"));
-        if(System.getProperty("riaeew.debug") != null) {
+        if (System.getProperty("riaeew.debug") != null) {
             this.dataSource = new ChinaEEWLocalMock();
             getLogger().info("插件目前运行在模拟数据源下");
-        }else {
-            this.dataSource = new ChinaEEW();
+        } else {
+            this.dataSource = new ChinaEEW(this);
+            getLogger().info("插件目前运行在ChinaEEW数据源下");
         }
         //
         this.eewUpdater = new EEWUpdater(this, this.dataSource);
     }
 
-    public ConfigurationSection getConfig(){
+    public ConfigurationSection getConfig() {
         return null;
     }
 
-    public TextManager text(){
+    public TextManager text() {
         return this.text;
     }
 
-    @Subscribe(order= PostOrder.LAST)
-    public void onConnected(LoginEvent event){
-        if(!event.getResult().isAllowed()) return;
-        GeoIPResult result =  geoIPDatabase.query(event.getPlayer().getRemoteAddress().getAddress());
-        geoIPResultMap.put(event.getPlayer().getUniqueId(),result);
-        logger.info("Located user "+event.getPlayer().getUsername()+" with IP address ["+event.getPlayer().getRemoteAddress().getAddress().getHostAddress()+"] to GeoLocation: "+result.toString());
+    @Subscribe(order = PostOrder.LAST)
+    public void onConnected(LoginEvent event) {
+        if (!event.getResult().isAllowed()) return;
+        GeoIPResult result = geoIPDatabase.query(event.getPlayer().getRemoteAddress().getAddress());
+        geoIPResultMap.put(event.getPlayer().getUniqueId(), result);
+        logger.info("Located user " + event.getPlayer().getUsername() + " with IP address [" + event.getPlayer().getRemoteAddress().getAddress().getHostAddress() + "] to GeoLocation: " + result.toString());
     }
-    @Subscribe(order= PostOrder.LAST)
-    public void onDisconnected(DisconnectEvent event){
+
+    @Subscribe(order = PostOrder.LAST)
+    public void onDisconnected(DisconnectEvent event) {
         geoIPResultMap.remove(event.getPlayer().getUniqueId());
     }
 
