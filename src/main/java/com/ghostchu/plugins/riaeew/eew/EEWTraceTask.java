@@ -43,6 +43,7 @@ public class EEWTraceTask implements Runnable {
     @Getter
     private boolean stopped = false;
     private ScheduledTask task;
+    private long startAt = -1;
 
     public EEWTraceTask(RIAEEW plugin, EarthQuakeInfoBase base) {
         this.base = base;
@@ -52,6 +53,7 @@ public class EEWTraceTask implements Runnable {
 
     public void start() {
         broadcastGlobal();
+        this.startAt = System.currentTimeMillis();
         //this.players = plugin.getGeoIPResultMap().keySet().stream().map(u -> plugin.getServer().getPlayer(u))
         //        .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
         this.task = plugin.getServer().getScheduler().buildTask(plugin, this).repeat(1, TimeUnit.SECONDS).schedule();
@@ -136,7 +138,7 @@ public class EEWTraceTask implements Runnable {
                 warnPlayer(player, base, geo, playerDistance, playerIntensity, remainsSeconds);
             }
         }
-        if (maxSeconds <= 0.0d) {
+        if (maxSeconds <= 0.0d && (System.currentTimeMillis() - startAt) > 120 * 1000) {
             stop();
         }
     }
@@ -153,10 +155,10 @@ public class EEWTraceTask implements Runnable {
                 colorMagnitude(base.getMagnitude()), thin(playerDistance)).component();
         eewTime.putIfAbsent(player.getUniqueId(), countdownSeconds);
 
-        if(countdownSeconds % 2 == 0){
-            line1=line1.color(NamedTextColor.RED);
-        }else{
-            line1=line1.color(NamedTextColor.YELLOW);
+        if (countdownSeconds % 2 == 0) {
+            line1 = line1.color(NamedTextColor.RED);
+        } else {
+            line1 = line1.color(NamedTextColor.YELLOW);
         }
 
         if (countdownSeconds > 0) {
@@ -234,6 +236,6 @@ public class EEWTraceTask implements Runnable {
         if (playerIntensity < 3) {
             return false;
         }
-        return countdownSeconds <= 1200;
+        return countdownSeconds <= 1200 && countdownSeconds >= 0;
     }
 }

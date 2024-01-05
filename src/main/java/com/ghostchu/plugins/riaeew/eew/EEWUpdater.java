@@ -54,10 +54,8 @@ public class EEWUpdater implements Runnable {
                 if (latestBase.getUpdates() != task.getBase().getUpdates()) {
                     task.update(latestBase);
                     plugin.getLogger().info("更新报： " + task.getBase() + " -> " + latestBase);
-                    pointer = latestBase.getStartAt();
+                    pointer = Math.max(latestBase.getUpdateAt(), latestBase.getStartAt());
                     plugin.getLogger().info("Updated pointer value to " + pointer);
-                } else {
-                    plugin.getLogger().info("忽略更新报：事件已结束或不存在");
                 }
             }).exceptionally(th -> {
                 plugin.getLogger().error("无法取得指定地震的更新报", th);
@@ -72,11 +70,11 @@ public class EEWUpdater implements Runnable {
             if (list == null || list.isEmpty()) return;
             for (EarthQuakeInfoBase base : list) {
                 if (plugin.getTraceTask().containsKey(base.getId())) {
-                    plugin.getLogger().info("Skipped eventId " + base.getId() + ": already in tasks");
+                   // plugin.getLogger().info("Skipped eventId " + base.getId() + ": already in tasks");
                     continue;
                 }
                 if (DUPLICATE_CACHE.asMap().containsKey(base.getId())) {
-                    plugin.getLogger().info("Skipped eventId " + base.getId() + ": duplicated");
+                  //  plugin.getLogger().info("Skipped eventId " + base.getId() + ": duplicated");
                     continue;
                 }
                 EEWTraceTask traceTask = new EEWTraceTask(plugin, base);
@@ -84,7 +82,7 @@ public class EEWUpdater implements Runnable {
                 DUPLICATE_CACHE.put(base.getId(), true);
                 traceTask.start();
                 plugin.getLogger().info("地震预警启动 " + base);
-                pointer = traceTask.getBase().getStartAt();
+                pointer = Math.max(traceTask.getBase().getUpdateAt(), traceTask.getBase().getStartAt());
                 plugin.getLogger().info("Updated pointer value to " + pointer);
             }
         }).exceptionally(th -> {
