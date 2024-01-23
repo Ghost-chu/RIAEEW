@@ -3,8 +3,8 @@ package com.ghostchu.plugins.riaeew;
 import com.ghostchu.plugins.riaeew.eew.EEWTraceTask;
 import com.ghostchu.plugins.riaeew.eew.EEWUpdater;
 import com.ghostchu.plugins.riaeew.eew.datasource.DataSource;
-import com.ghostchu.plugins.riaeew.eew.datasource.impl.ChinaEEW;
 import com.ghostchu.plugins.riaeew.eew.datasource.impl.ChinaEEWLocalMock;
+import com.ghostchu.plugins.riaeew.eew.datasource.impl.WolfxJP;
 import com.ghostchu.plugins.riaeew.geoip.GeoIPResult;
 import com.ghostchu.plugins.riaeew.geoip.impl.IP2LocationImpl;
 import com.ghostchu.plugins.riaeew.text.TextManager;
@@ -72,9 +72,11 @@ public class RIAEEW {
             this.dataSource = new ChinaEEWLocalMock();
             getLogger().info("插件目前运行在模拟数据源下");
         } else {
-            this.dataSource = new ChinaEEW(this);
-            getLogger().info("插件目前运行在ChinaEEW数据源下");
+//            this.dataSource = new ChinaEEW(this);
+//            getLogger().info("插件目前运行在ChinaEEW数据源下");
+            this.dataSource = new WolfxJP();
         }
+        getLogger().info("插件目前运行在 "+this.dataSource.getName()+" 数据源下");
         //
         this.eewUpdater = new EEWUpdater(this, this.dataSource);
     }

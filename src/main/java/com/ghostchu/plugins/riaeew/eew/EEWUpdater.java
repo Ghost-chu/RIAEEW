@@ -70,11 +70,12 @@ public class EEWUpdater implements Runnable {
             if (list == null || list.isEmpty()) return;
             for (EarthQuakeInfoBase base : list) {
                 if (plugin.getTraceTask().containsKey(base.getId())) {
-                   // plugin.getLogger().info("Skipped eventId " + base.getId() + ": already in tasks");
-                    continue;
-                }
-                if (DUPLICATE_CACHE.asMap().containsKey(base.getId())) {
-                  //  plugin.getLogger().info("Skipped eventId " + base.getId() + ": duplicated");
+                    // plugin.getLogger().info("Skipped eventId " + base.getId() + ": already in tasks");
+                    EEWTraceTask task = plugin.getTraceTask().get(base.getId());
+                    if(!task.getBase().equals(base)) {
+                        task.update(base);
+                        plugin.getLogger().info("地震预警数据更新 " + base);
+                    }
                     continue;
                 }
                 EEWTraceTask traceTask = new EEWTraceTask(plugin, base);
