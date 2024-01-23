@@ -4,8 +4,6 @@ import com.ghostchu.plugins.riaeew.eew.datasource.DataSource;
 import com.ghostchu.plugins.riaeew.eew.datasource.EarthQuakeInfoBase;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-import kong.unirest.HttpResponse;
-import kong.unirest.JsonNode;
 import kong.unirest.Unirest;
 import kong.unirest.UnirestInstance;
 import kong.unirest.json.JSONObject;
@@ -13,18 +11,21 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-public class WolfxJP implements DataSource {
+public class WolfxJPMock implements DataSource {
     private final String WOLFX_API = "https://api.wolfx.jp/cenc_eqlist.json";
     private static final Gson GSON = new Gson();
     private final UnirestInstance unirest;
     //  private volatile String lastMD5 = "";
 
-    public WolfxJP(){
+    public WolfxJPMock(){
         this.unirest = Unirest.spawnInstance();
         this.unirest.config().automaticRetries(false);
         this.unirest.config().addDefaultHeader("User-Agent", "RIAEEW-Client/1.0.0");
@@ -37,36 +38,36 @@ public class WolfxJP implements DataSource {
     @Override
     public CompletableFuture<List<EarthQuakeInfoBase>> getEarthQuakeList(long startPointer) {
         return CompletableFuture.supplyAsync(() -> {
-            HttpResponse<JsonNode> resp = unirest.get(WOLFX_API)
-                    .asJson();
-            if (!resp.isSuccess()) {
-                throw new IllegalStateException("查询地震信息失败，HTTP请求错误: " + resp.getStatus() + " - " + resp.getStatusText() + ": " + resp.getBody());
+            JSONObject resp = null;
+            try {
+                resp = new JSONObject(Files.readString(new File("D:\\test.json").toPath()));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            JSONObject node = resp.getBody().getObject();
 //            String md5 = node.getString("md5");
 //            if(md5.equalsIgnoreCase(lastMD5)){
 //                return Collections.emptyList();
 //            }
-           // lastMD5 = md5;
+            // lastMD5 = md5;
             List<WolfxJsonNoBean> entries = new ArrayList<>();
             for (int i = 1; i <= 50; i++) {
-                if (!node.has("No" + i)) {
+                if (!resp.has("No" + i)) {
                     break;
                 }
-                JSONObject object = node.getJSONObject("No" + i);
+                JSONObject object = resp.getJSONObject("No" + i);
                 entries.add(GSON.fromJson(object.toString(), WolfxJsonNoBean.class));
             }
             return entries.stream().map(wolfx -> new EarthQuakeInfoBase(
                     wolfx.getLocation(),
-                     1,
-                     dateToMs(wolfx.getTime(), "yyyy-MM-dd HH:mm:ss"),
-                     dateToMs(wolfx.getTime(), "yyyy-MM-dd HH:mm:ss"),
-                     Double.parseDouble(wolfx.getLatitude()),
-                     Double.parseDouble(wolfx.getLongitude()),
-                     Double.parseDouble(wolfx.getMagnitude()),
-                     Double.parseDouble(wolfx.getDepth()),
-                     wolfx.getLocation()
-             )).filter(eew->eew.getStartAt() > startPointer).collect(Collectors.toList());
+                    1,
+                    dateToMs(wolfx.getTime(), "yyyy-MM-dd HH:mm:ss"),
+                    dateToMs(wolfx.getTime(), "yyyy-MM-dd HH:mm:ss"),
+                    Double.parseDouble(wolfx.getLatitude()),
+                    Double.parseDouble(wolfx.getLongitude()),
+                    Double.parseDouble(wolfx.getMagnitude()),
+                    Double.parseDouble(wolfx.getDepth()),
+                    wolfx.getLocation()
+            )).filter(eew->eew.getStartAt() > startPointer).collect(Collectors.toList());
         });
     }
 
@@ -77,7 +78,7 @@ public class WolfxJP implements DataSource {
 
     @Override
     public String getName() {
-        return "Wolfx.jp";
+        return "Wolfx.jp（模拟）";
     }
     public static long dateToMs(String _date,String pattern) {
         SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.getDefault());

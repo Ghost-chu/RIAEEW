@@ -3,8 +3,8 @@ package com.ghostchu.plugins.riaeew;
 import com.ghostchu.plugins.riaeew.eew.EEWTraceTask;
 import com.ghostchu.plugins.riaeew.eew.EEWUpdater;
 import com.ghostchu.plugins.riaeew.eew.datasource.DataSource;
-import com.ghostchu.plugins.riaeew.eew.datasource.impl.ChinaEEWLocalMock;
 import com.ghostchu.plugins.riaeew.eew.datasource.impl.WolfxJP;
+import com.ghostchu.plugins.riaeew.eew.datasource.impl.WolfxJPMock;
 import com.ghostchu.plugins.riaeew.geoip.GeoIPResult;
 import com.ghostchu.plugins.riaeew.geoip.impl.IP2LocationImpl;
 import com.ghostchu.plugins.riaeew.text.TextManager;
@@ -14,10 +14,12 @@ import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.connection.DisconnectEvent;
 import com.velocitypowered.api.event.connection.LoginEvent;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
+import com.velocitypowered.api.event.proxy.ProxyShutdownEvent;
 import com.velocitypowered.api.plugin.Dependency;
 import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
+import kong.unirest.Unirest;
 import lombok.Getter;
 import org.bspfsystems.yamlconfiguration.configuration.ConfigurationSection;
 import org.slf4j.Logger;
@@ -69,7 +71,7 @@ public class RIAEEW {
         }
         this.text = new TextManager(this, new File(dataFolder, "messages.yml"));
         if (System.getProperty("riaeew.debug") != null) {
-            this.dataSource = new ChinaEEWLocalMock();
+            this.dataSource = new WolfxJPMock();
             getLogger().info("插件目前运行在模拟数据源下");
         } else {
 //            this.dataSource = new ChinaEEW(this);
@@ -79,6 +81,12 @@ public class RIAEEW {
         getLogger().info("插件目前运行在 "+this.dataSource.getName()+" 数据源下");
         //
         this.eewUpdater = new EEWUpdater(this, this.dataSource);
+    }
+
+    @Subscribe
+    public void onProxyShutdown(ProxyShutdownEvent event) {
+        Unirest.shutDown();
+        logger.info("正在安全关闭 RIAEEW 使用的资源……");
     }
 
     public ConfigurationSection getConfig() {
