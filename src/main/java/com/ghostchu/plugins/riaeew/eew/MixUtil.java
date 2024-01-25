@@ -12,6 +12,10 @@ public class MixUtil {
         return d;
     }
 
+    public static boolean isOutOfChina(double longitude, double latitude){
+        return longitude < 72.004 || longitude > 137.8347 || latitude < 0.8293 || latitude > 55.8271;
+    }
+
 
     
 }

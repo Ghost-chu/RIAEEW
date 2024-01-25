@@ -5,6 +5,7 @@ import com.ghostchu.plugins.riaeew.eew.datasource.EarthQuakeInfoBase;
 import com.ghostchu.plugins.riaeew.geoip.GeoIPResult;
 import com.velocitypowered.api.proxy.Player;
 import com.velocitypowered.api.scheduler.ScheduledTask;
+import com.velocitypowered.api.scheduler.TaskStatus;
 import dev.simplix.protocolize.api.Protocolize;
 import dev.simplix.protocolize.api.SoundCategory;
 import dev.simplix.protocolize.api.player.ProtocolizePlayer;
@@ -49,9 +50,16 @@ public class EEWTraceTask implements Runnable {
         this.base = base;
         this.plugin = plugin;
         this.protocolizeInstalled = plugin.getServer().getPluginManager().getPlugin("protocolize").isPresent();
+        plugin.log("创建新的地震追踪任务 "+base.toString());
     }
 
     public void start() {
+        if(MixUtil.isOutOfChina(base.getLongitude(), base.getLatitude())){
+            plugin.getLogger().info("忽略 "+base+" 的地震信息：处于中国境外");
+            plugin.log("忽略：处于中国境外： "+base.toString());
+            stop();
+            return;
+        }
         broadcastGlobal();
         this.startAt = System.currentTimeMillis();
         //this.players = plugin.getGeoIPResultMap().keySet().stream().map(u -> plugin.getServer().getPlayer(u))
@@ -61,8 +69,9 @@ public class EEWTraceTask implements Runnable {
 
     public void stop() {
         stopped = true;
-        this.task.cancel();
-
+        if(this.task != null && this.task.status() == TaskStatus.SCHEDULED) {
+            this.task.cancel();
+        }
         if (!warnedWithCountDown.isEmpty()) {
             Component locationComponent = Component
                     .text(base.getLocation()).style(Style.style(NamedTextColor.GOLD, TextDecoration.UNDERLINED))
@@ -75,6 +84,12 @@ public class EEWTraceTask implements Runnable {
     }
 
     public void update(EarthQuakeInfoBase base) {
+        if(MixUtil.isOutOfChina(base.getLongitude(), base.getLatitude())){
+            plugin.getLogger().info("忽略 "+base+" 的地震信息：处于中国境外");
+            plugin.log("忽略：处于中国境外： "+ base);
+            stop();
+            return;
+        }
         if (stopped) {
             return;
         }
@@ -83,18 +98,22 @@ public class EEWTraceTask implements Runnable {
     }
 
     public void broadcastGlobal() {
+        plugin.log("全局广播： "+base.toString());
         double intensity = HuaniaEarthQuakeCalculator.getIntensity(base.getMagnitude(), 0.0001d);
         IntensityLevel level = IntensityLevel.mapValue(intensity);
         //Component intensityTitle = plugin.text().of("intensity." + level.name() + ".title").component();
         Component intensityDescription = plugin.text().of("intensity." + level.name() + ".description").component();
         for (Player player : plugin.getServer().getAllPlayers()) {
             if (canBroadcastPlayer(player)) {
+                plugin.log("广播给 "+player.getUsername()+"： "+base.toString());
                 GeoIPResult geo = plugin.getGeoIPResultMap().get(player.getUniqueId());
                 double myLongitude = -1;
                 double myLatitude = -1;
+                String geoIp = "定位失败，IP 库不存在您的信息";
                 if (geo != null) {
                     myLongitude = geo.getLongitude();
                     myLatitude = geo.getLatitude();
+                    geoIp = geo.getCountry()+", "+geo.getRegion()+", "+geo.getCity() + " - 经度："+geo.getLongitude()+", 维度："+geo.getLatitude();
                 }
                 Component locationComponent = Component
                         .text(base.getLocation()).style(Style.style(NamedTextColor.GOLD, TextDecoration.UNDERLINED))
@@ -106,7 +125,7 @@ public class EEWTraceTask implements Runnable {
                         colorIntensity(intensity), intensityDescription,
                         format.format(new Date(base.getStartAt())), format.format(new Date(base.getUpdateAt())),
                         officialPublisherComponent(),
-                        plugin.getDataSource().getName()).send();
+                        plugin.getDataSource().getName(),geoIp).send();
             }
         }
     }
@@ -120,6 +139,9 @@ public class EEWTraceTask implements Runnable {
 
     @Override
     public void run() {
+        if(MixUtil.isOutOfChina(base.getLongitude(), base.getLatitude())){
+            return;
+        }
         double maxSeconds = 0.0d;
         for (Player player : plugin.getGeoIPResultMap().keySet().stream().map(u -> plugin.getServer().getPlayer(u))
                 .filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList())) {
@@ -139,6 +161,7 @@ public class EEWTraceTask implements Runnable {
             }
         }
         if (maxSeconds <= 0.0d && (System.currentTimeMillis() - startAt) > 120 * 1000) {
+            plugin.log("生命周期结束： "+base.toString());
             stop();
         }
     }
@@ -167,6 +190,7 @@ public class EEWTraceTask implements Runnable {
             player.sendActionBar(plugin.text().of("broadcast-affected-actionbar", colorIntensity(playerIntensity),
                     intensityDescription).component());
             plugin.getLogger().info("[实时计时] 距离地震横波到达 " + player.getUsername() + " 的位置，剩余 " + countdownSeconds + " 秒");
+            plugin.log("[实时计时] 距离地震横波到达 " + player.getUsername() + " 的位置，剩余 " + countdownSeconds + " 秒");
             if (countdownSeconds >= 60) {
                 playSound(player.getUniqueId(), new SoundEffect(Sound.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.MASTER, 0, 0, 0, Float.MAX_VALUE, 1.0f));
             } else if (countdownSeconds >= 30) {
@@ -193,6 +217,8 @@ public class EEWTraceTask implements Runnable {
                     eewTime.getOrDefault(player.getUniqueId(), -1L),
                     officialPublisherComponent(), plugin.getDataSource().getName(), format.format(base.getStartAt())).send();
             plugin.getLogger().info("[预警结束] 为 " + player.getUsername() + " 提前预警了 " +
+                    eewTime.getOrDefault(player.getUniqueId(), -1L) + " 秒");
+            plugin.log("[预警结束] 为 " + player.getUsername() + " 提前预警了 " +
                     eewTime.getOrDefault(player.getUniqueId(), -1L) + " 秒");
             playSound(player.getUniqueId(), new SoundEffect(Sound.ENTITY_WITHER_DEATH, SoundCategory.MASTER, 0, 0, 0, Float.MAX_VALUE, 1.0f));
         }

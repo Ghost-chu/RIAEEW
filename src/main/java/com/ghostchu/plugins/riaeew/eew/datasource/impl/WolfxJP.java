@@ -77,7 +77,7 @@ public class WolfxJP implements DataSource {
 
     @Override
     public String getName() {
-        return "Wolfx.jp";
+        return "中国地震台网 （wolfx api）";
     }
     public static long dateToMs(String _date,String pattern) {
         SimpleDateFormat format = new SimpleDateFormat(pattern, Locale.getDefault());
