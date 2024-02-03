@@ -70,7 +70,7 @@ public class RIAEEW {
         this.dataFolder = dataFolderPath.toFile();
         this.dataFolder.mkdirs();
         try {
-            this.geoIPDatabase = new IP2LocationImpl(this.dataFolder);
+            this.geoIPDatabase = new IP2LocationImpl(getLogger(),this.dataFolder);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -91,6 +91,9 @@ public class RIAEEW {
     @Subscribe
     public void onProxyShutdown(ProxyShutdownEvent event) {
         Unirest.shutDown();
+        if(geoIPDatabase != null){
+            geoIPDatabase.close();
+        }
         logger.info("正在安全关闭 RIAEEW 使用的资源……");
     }
 

@@ -4,4 +4,6 @@ import java.net.InetAddress;
 
 public interface GeoIPDatabase {
     GeoIPResult query(InetAddress address);
+
+    void close();
 }
