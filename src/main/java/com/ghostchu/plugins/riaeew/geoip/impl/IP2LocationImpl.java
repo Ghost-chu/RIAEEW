@@ -38,6 +38,7 @@ public class IP2LocationImpl extends FileAlterationListenerAdaptor implements Ge
         ipv4File = new File(dataFolder, "IP2LOCATION-IPV4.BIN");
         ipv6File = new File(dataFolder, "IP2LOCATION-IPV6.BIN");
         checkUpdatePatches();
+        openDatabases();
         updateNotification.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
